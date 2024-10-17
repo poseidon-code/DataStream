@@ -1,0 +1,20 @@
+cmake_minimum_required(VERSION 3.25)
+project(DataStream LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
+
+
+add_library(${PROJECT_NAME} INTERFACE)
+
+target_include_directories(${PROJECT_NAME} INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
+install(TARGETS ${PROJECT_NAME} EXPORT "${PROJECT_NAME}Export")
+install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include" DESTINATION "include")
+install(EXPORT "${PROJECT_NAME}Export"
+    FILE "${PROJECT_NAME}Config.cmake"
+    NAMESPACE ${PROJECT_NAME}::
+    DESTINATION "lib/cmake/${PROJECT_NAME}"
+)
