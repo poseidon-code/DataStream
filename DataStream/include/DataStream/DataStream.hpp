@@ -39,13 +39,13 @@ inline constexpr T byteswap(T value) {
 
 
 enum class Mode : bool {
-    Input = false,
-    Output
+    Input = false, // take deserialized data from the stream into the program (input to program)
+    Output // put serialized data to the stream from the prgram (output to stream)
 };
 
 
 template <
-    DataStream::Mode mode = DataStream::Mode::Output,
+    DataStream::Mode mode = DataStream::Mode::Input,
     std::endian endiannes = std::endian::native
 >
 class Stream {
@@ -62,7 +62,7 @@ private:
     }
 
     inline void write(std::span<const uint8_t> data)
-    requires (mode == DataStream::Mode::Input)
+    requires (mode == DataStream::Mode::Output)
     {
         if (this->file_stream) {
             this->file_stream->write(reinterpret_cast<const char*>(data.data()), data.size());
@@ -77,7 +77,7 @@ private:
     }
 
     inline void read(std::span<uint8_t> data)
-    requires (mode == DataStream::Mode::Output)
+    requires (mode == DataStream::Mode::Input)
     {
         if (this->file_stream) {
             this->file_stream->read(reinterpret_cast<char*>(data.data()), data.size());
@@ -122,7 +122,7 @@ public:
     template <typename T>
     requires std::is_arithmetic_v<T>
     Stream& operator<<(const T& value)
-    requires (mode == DataStream::Mode::Input)
+    requires (mode == DataStream::Mode::Output)
     {
         T output = this->byteswap(value);
         this->write(std::span<const uint8_t>(reinterpret_cast<const uint8_t*>(&output), sizeof(T)));
@@ -132,7 +132,7 @@ public:
     template <typename T>
     requires std::is_arithmetic_v<T>
     Stream& operator>>(T& value)
-    requires (mode == DataStream::Mode::Output)
+    requires (mode == DataStream::Mode::Input)
     {
         this->read(std::span<uint8_t>(reinterpret_cast<uint8_t*>(&value), sizeof(T)));
         value = this->byteswap(value);
@@ -142,7 +142,7 @@ public:
     template <typename T>
     requires std::is_arithmetic_v<T>
     inline void set(const T& value, size_t start_index)
-    requires (mode == DataStream::Mode::Input)
+    requires (mode == DataStream::Mode::Output)
     {
         if (this->file_stream)
             throw std::logic_error("set() not supported with file stream");
@@ -156,7 +156,7 @@ public:
     template <typename T>
     requires std::is_arithmetic_v<T>
     inline void get(T& value, size_t start_index)
-    requires (mode == DataStream::Mode::Output)
+    requires (mode == DataStream::Mode::Input)
     {
         if (this->file_stream)
             throw std::logic_error("get() not supported with file stream");
