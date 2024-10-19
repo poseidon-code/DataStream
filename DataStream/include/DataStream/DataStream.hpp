@@ -8,6 +8,7 @@
 #include <span>
 #include <stdexcept>
 #include <type_traits>
+#include <utility>
 
 
 
@@ -117,6 +118,40 @@ public:
     {
         if (!this->file_stream->is_open())
             throw std::ios_base::failure("file stream not open");
+    }
+
+    ~Stream() = default;
+
+    Stream(const Stream& o)
+        : data(o.data),
+        underlying_data(o.underlying_data),
+        file_stream(o.file_stream),
+        index(o.index)
+    {}
+
+    Stream& operator=(const Stream& o) {
+        if (this == &o) return *this;
+        data = o.data;
+        underlying_data = o.underlying_data;
+        file_stream = o.file_stream;
+        index = o.index;
+        return *this;
+    }
+
+    Stream(Stream&& o) noexcept
+        : data(std::exchange(o.data, {})),
+        underlying_data(std::exchange(o.underlying_data, nullptr)),
+        file_stream(std::exchange(o.file_stream, nullptr)),
+        index(std::exchange(o.index, 0))
+    {}
+
+    Stream& operator=(Stream&& o) noexcept {
+        if (this == &o) return *this;
+        data = std::exchange(o.data, {});
+        underlying_data = std::exchange(o.underlying_data, nullptr);
+        file_stream = std::exchange(o.file_stream, nullptr);
+        index = std::exchange(o.index, 0);
+        return *this;
     }
 
     template <typename T>
