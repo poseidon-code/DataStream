@@ -39,14 +39,23 @@ inline constexpr T byteswap(T value) {
 }
 
 
-enum class Mode : bool {
-    Input = false, // take deserialized data from the stream into the program (input to program)
-    Output // put serialized data to the stream from the prgram (output to stream)
+struct Mode {
+Mode() = delete;
+Mode(const Mode& o) = delete;
+Mode(Mode&& o) noexcept = delete;
+Mode& operator=(const Mode& o) = delete;
+Mode& operator=(Mode&& o) noexcept = delete;
+~Mode() = default;
+
+using Type = uint8_t;
+static const Type
+    Input = 0b00000001, // take deserialized data from the stream into the program (input to program)
+    Output = 0b00000010; // put serialized data to the stream from the prgram (output to stream)
 };
 
 
 template <
-    DataStream::Mode mode = DataStream::Mode::Input,
+    DataStream::Mode::Type mode = (DataStream::Mode::Input | DataStream::Mode::Output),
     std::endian endiannes = std::endian::native
 >
 class Stream {
@@ -58,12 +67,12 @@ private:
 
     template <typename T>
     requires std::is_floating_point_v<T> || std::is_integral_v<T>
-    inline constexpr T byteswap(T value) {
+    inline constexpr T byteswap(T value) const {
         return endiannes != std::endian::native ? DataStream::byteswap(value) : value;
     }
 
     inline void write(std::span<const uint8_t> data)
-    requires (mode == DataStream::Mode::Output)
+    requires ((mode & DataStream::Mode::Output) == DataStream::Mode::Output)
     {
         if (this->file_stream) {
             this->file_stream->write(reinterpret_cast<const char*>(data.data()), data.size());
@@ -78,7 +87,7 @@ private:
     }
 
     inline void read(std::span<uint8_t> data)
-    requires (mode == DataStream::Mode::Input)
+    requires ((mode & DataStream::Mode::Input) == DataStream::Mode::Input)
     {
         if (this->file_stream) {
             this->file_stream->read(reinterpret_cast<char*>(data.data()), data.size());
@@ -95,26 +104,20 @@ private:
 
 public:
     template <typename Container>
-    requires (
-        !std::is_array_v<Container>
-        && std::is_convertible_v<typename Container::value_type, uint8_t>
-    )
+    requires (!std::is_array_v<Container> && std::is_convertible_v<typename Container::value_type, uint8_t>)
     Stream(Container& container)
         : data(std::span<uint8_t>(container.data(), container.size())),
-        underlying_data(this->data.data()),
-        index(0)
+        underlying_data(this->data.data())
     {}
 
     template <std::size_t N>
     Stream(uint8_t (&array)[N])
         : data(array, N),
-        underlying_data(this->data.data()),
-        index(0)
+        underlying_data(this->data.data())
     {}
 
     Stream(std::fstream& file)
-        : file_stream(&file),
-          index(0)
+        : file_stream(&file)
     {
         if (!this->file_stream->is_open())
             throw std::ios_base::failure("file stream not open");
@@ -177,7 +180,7 @@ public:
     template <typename T>
     requires std::is_arithmetic_v<T>
     inline void set(const T& value, size_t start_index)
-    requires (mode == DataStream::Mode::Output)
+    requires ((mode & DataStream::Mode::Output) == DataStream::Mode::Output)
     {
         if (this->file_stream)
             throw std::logic_error("set() not supported with file stream");
@@ -190,8 +193,8 @@ public:
 
     template <typename T>
     requires std::is_arithmetic_v<T>
-    inline void get(T& value, size_t start_index)
-    requires (mode == DataStream::Mode::Input)
+    inline void get(T& value, size_t start_index) const
+    requires ((mode & DataStream::Mode::Input) == DataStream::Mode::Input)
     {
         if (this->file_stream)
             throw std::logic_error("get() not supported with file stream");
@@ -200,6 +203,10 @@ public:
             throw std::out_of_range("start index out of range");
         std::copy_n(this->underlying_data + start_index, sizeof(T), reinterpret_cast<uint8_t*>(&value));
         value = byteswap(value);
+    }
+
+    inline const uint8_t* get() const {
+        return this->underlying_data;
     }
 };
 
