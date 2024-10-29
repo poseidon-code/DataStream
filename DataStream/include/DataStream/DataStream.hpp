@@ -25,13 +25,11 @@ template <typename T>
 requires std::is_floating_point_v<T>
 inline constexpr T byteswap(T value) {
     using equivalent_integer_type =
-        std::conditional_t<
-            sizeof(T) == 2, uint16_t, std::conditional_t<
-                sizeof(T) == 4, uint32_t, std::conditional_t<
-                    sizeof(T) == 8, uint64_t, __uint128_t
-                >
-            >
-        >;
+        std::conditional_t<sizeof(T) == 2, uint16_t,
+        std::conditional_t<sizeof(T) == 4, uint32_t,
+        std::conditional_t<sizeof(T) == 8, uint64_t,
+        uint64_t
+    >>>;
 
     equivalent_integer_type integer_type = std::bit_cast<equivalent_integer_type>(value);
     equivalent_integer_type swapped = std::byteswap(integer_type);
