@@ -204,6 +204,8 @@ public:
     }
 
     inline const uint8_t* get() const {
+        if (this->file_stream)
+            throw std::logic_error("get() not supported with file stream");
         return this->underlying_data;
     }
 };
