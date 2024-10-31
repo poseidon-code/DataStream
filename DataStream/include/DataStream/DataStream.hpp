@@ -5,8 +5,11 @@
 #include <concepts>
 #include <cstdint>
 #include <fstream>
+#include <iomanip>
 #include <span>
 #include <stdexcept>
+#include <sstream>
+#include <string>
 #include <type_traits>
 #include <utility>
 
@@ -207,6 +210,18 @@ public:
         if (this->file_stream)
             throw std::logic_error("get() not supported with file stream");
         return this->underlying_data;
+    }
+
+    inline std::string string(const std::string& delimeter = "") {
+        if (this->file_stream)
+            throw std::logic_error("string() not supported with file stream");
+
+        std::ostringstream oss;
+        oss << std::hex << std::uppercase << std::setfill('0');
+        for (size_t i = 0; i < length; ++i)
+            oss << std::setw(2) << static_cast<uint16_t>(this->underlying_data[i]) << (i == length - 1 ? "" : delimeter);
+        std::cout << std::dec << std::nouppercase << std::setfill(' ');
+        return oss.str();
     }
 };
 
