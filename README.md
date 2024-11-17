@@ -7,9 +7,11 @@ A modern binary data serializer in C++ 23 standard, almost like Qt's `QDataStrea
 ```cpp
 #include <cstdint>
 #include <fstream>
+#include <stdfloat>
 #include <vector>
 
 #include "DataStream/DataStream.hpp"
+#include "DataStream/FixedPointQuantizer.hpp"
 
 
 int main() {
@@ -51,13 +53,22 @@ int main() {
     e.close();
 
 
+    // using fixed point quantizer
+    std::float64_t value = 67.9834672;
+    DataStream::FixedPointQuantizer<std::float64_t> quantizer(-90.0, 90.0); // low precision on low number of bits
+    auto quantized_value = quantizer.to_fpq(value); // quantized value to 64bit signed integer
+    std::cout << quantized_value << std::endl;
+    std::cout << quantizer.from_fpq(quantized_value) << std::endl; // switched back to floating point value
+
+
     return 0;
 }
 ```
 
 # [GPL v3 License](./LICENSE)
 
-Copyright (C) 2024 Pritam Halder
+DataStream : A modern binary data serializer in C++ 23 standard.
+Copyright (C) 2024  Pritam Halder
 
 This program is free software: you can redistribute it and/or modify it under the terms of the
 GNU General Public License as published by the Free Software Foundation, either version 3 of the
