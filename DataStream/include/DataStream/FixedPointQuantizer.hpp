@@ -29,24 +29,34 @@ Email : pritamhalder.poseidon@proton.me
 
 
 template <typename T>
-concept FloatingPoint = std::is_floating_point_v<T> || std::is_same_v<T, std::float16_t>;
+concept ValidFloatingType = std::is_floating_point_v<T> || std::is_same_v<T, std::float16_t> && !std::is_same_v<T, std::float128_t>;
 
+
+template <typename T>
+concept ValidIntermediateType =
+    std::is_void_v<T> ||
+    std::is_same_v<T, int8_t>  || std::is_same_v<T, uint8_t>  ||
+    std::is_same_v<T, int16_t> || std::is_same_v<T, uint16_t> ||
+    std::is_same_v<T, int32_t> || std::is_same_v<T, uint32_t> ||
+    std::is_same_v<T, int64_t> || std::is_same_v<T, uint64_t>;
 
 
 namespace DataStream {
 
-template <FloatingPoint T>
+template <ValidFloatingType T, ValidIntermediateType _IT = void>
 class FixedPointQuantizer {
 private:
     T minimum_value, maximum_value;
 
 public:
-    using IT =
-		std::conditional_t<std::is_same_v<T, std::float16_t>, int16_t,
-		std::conditional_t<std::is_same_v<T, std::float32_t> || std::is_same_v<T, float>, int32_t,
-		std::conditional_t<std::is_same_v<T, std::float64_t> || std::is_same_v<T, double>, int64_t,
-		int64_t
-	>>>;
+    using IT = std::conditional_t<
+        std::is_void_v<IT_>,
+            std::conditional_t<std::is_same_v<T, std::float16_t>, int16_t,
+            std::conditional_t<std::is_same_v<T, std::float32_t> || std::is_same_v<T, float>, int32_t,
+            std::conditional_t<std::is_same_v<T, std::float64_t> || std::is_same_v<T, double>, int64_t,
+        >>>,
+        _IT
+    >;
 
 	static constexpr uint16_t Bits = sizeof(IT) * 8;
 
