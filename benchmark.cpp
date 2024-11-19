@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "DataStream/DataStream.hpp"
-
+#include "DataStream/FixedPointQuantizer.hpp"
 
 
 template<typename T, typename DS>
@@ -98,11 +98,6 @@ int main() {
     std::vector<uint8_t> b11(size * sizeof(dt11), 0x00);
     DataStream::Stream<DataStream::Mode::Output, std::endian::little> ds11(b11);
     benchmark<dt11, decltype(ds11)>(size, ds11, "std::vector<uint8_t>", "float64_t");
-
-    using dt12 = std::float128_t;
-    std::vector<uint8_t> b12(size * sizeof(dt12), 0x00);
-    DataStream::Stream<DataStream::Mode::Output, std::endian::little> ds12(b12);
-    benchmark<dt12, decltype(ds12)>(size, ds12, "std::vector<uint8_t>", "float128_t");
 
     return 0;
 }

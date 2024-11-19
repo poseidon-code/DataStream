@@ -46,7 +46,7 @@ inline constexpr T byteswap(T value) {
 }
 
 template <typename T>
-requires std::is_floating_point_v<T>
+requires (std::is_floating_point_v<T> && !std::is_same_v<T, std::float128_t>)
 inline constexpr T byteswap(T value) {
     using equivalent_integer_type =
         std::conditional_t<sizeof(T) == 2, std::uint16_t,
@@ -88,7 +88,7 @@ private:
     std::size_t index = 0;
 
     template <typename T>
-    requires std::is_floating_point_v<T> || std::is_integral_v<T>
+    requires ((std::is_floating_point_v<T> && !std::is_same_v<T, std::float128_t>) || std::is_integral_v<T>)
     inline constexpr T byteswap(T value) const {
         return endiannes != std::endian::native ? DataStream::byteswap(value) : value;
     }
@@ -132,7 +132,7 @@ public:
         underlying_data(this->data.data())
     {}
 
-    template <std::std::size_t N>
+    template <std::size_t N>
     Stream(std::uint8_t (&array)[N])
         : data(array, N),
         underlying_data(this->data.data())
@@ -180,7 +180,7 @@ public:
     }
 
     template <typename T>
-    requires std::is_arithmetic_v<T>
+    requires (std::is_arithmetic_v<T> && !std::is_same_v<T, std::float128_t>)
     Stream& operator<<(const T& value)
     requires (mode == DataStream::Mode::Output)
     {
@@ -190,7 +190,7 @@ public:
     }
 
     template <typename T>
-    requires std::is_arithmetic_v<T>
+    requires (std::is_arithmetic_v<T> && !std::is_same_v<T, std::float128_t>)
     Stream& operator>>(T& value)
     requires (mode == DataStream::Mode::Input)
     {
@@ -200,7 +200,7 @@ public:
     }
 
     template <typename T>
-    requires std::is_arithmetic_v<T>
+    requires (std::is_arithmetic_v<T> && !std::is_same_v<T, std::float128_t>)
     inline void set(const T& value, std::size_t start_index)
     requires ((mode & DataStream::Mode::Output) == DataStream::Mode::Output)
     {
@@ -214,7 +214,7 @@ public:
     }
 
     template <typename T>
-    requires std::is_arithmetic_v<T>
+    requires (std::is_arithmetic_v<T> && !std::is_same_v<T, std::float128_t>)
     inline void get(T& value, std::size_t start_index) const
     requires ((mode & DataStream::Mode::Input) == DataStream::Mode::Input)
     {
@@ -239,8 +239,8 @@ public:
 
         std::ostringstream oss;
         oss << std::hex << std::uppercase << std::setfill('0');
-        for (std::size_t i = 0; i < length; ++i)
-            oss << std::setw(2) << static_cast<std::uint16_t>(this->underlying_data[i]) << (i == length - 1 ? "" : delimeter);
+        for (std::size_t i = 0; i < this->data.size(); ++i)
+            oss << std::setw(2) << static_cast<std::uint16_t>(this->underlying_data[i]) << (i == this->data.size() - 1 ? "" : delimeter);
         std::cout << std::dec << std::nouppercase << std::setfill(' ');
         return oss.str();
     }
