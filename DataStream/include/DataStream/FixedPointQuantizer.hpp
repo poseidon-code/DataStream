@@ -50,10 +50,11 @@ private:
 
 public:
     using IT = std::conditional_t<
-        std::is_void_v<IT_>,
+        std::is_void_v<_IT>,
             std::conditional_t<std::is_same_v<T, std::float16_t>, int16_t,
             std::conditional_t<std::is_same_v<T, std::float32_t> || std::is_same_v<T, float>, int32_t,
             std::conditional_t<std::is_same_v<T, std::float64_t> || std::is_same_v<T, double>, int64_t,
+            int64_t
         >>>,
         _IT
     >;
